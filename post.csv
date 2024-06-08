@@ -8,5 +8,9 @@ admin,Funeral,sadness
 admin,:D,neutral
 admin,"I can't go there, I really sorry",shame
 admin,shame,neutral
-admin,This is embarrassing,shame
-admin,Fear is taking over,fear
+admin,Fear,fear
+admin,I fill fear,fear
+admin,You can't fill fear man,fear
+user,WOW,neutral
+admin,text 😠,neutral
+admin,I'm angry 😠,neutral

@@ -8,6 +8,9 @@ from auth import register_user, login_user
 model = joblib.load(r"C:\Users\mateu\PycharmProjects\ProjektAnalizaEmocji\emotion_detection_model.pkl")
 
 emotions_index = {0: "anger", 2: "happy", 4: "neutral", 3: "joy", 6: "sadness", 1: "fear", 5: "sad", 7: "shame"}
+emotions = {0: "😠", 2: "😀", 4: "🙂", 3: "😁", 6: "😢", 1: "😨", 5: "😔", 7: "☹️"}
+
+
 
 def predict_emotions(text):
     probabilities = model.predict_proba([text])[0]
@@ -24,12 +27,16 @@ def load_post():
     else:
         return pd.DataFrame(columns=['username', 'text', 'emotion'])
 
-def save_post(username, text, emotion):
+def save_post(username, text, emotion, selected_emotion):
     posts_df = load_post()
-    new_post = pd.DataFrame([[username, text, emotion]], columns=['username', 'text', 'emotion'])
+    new_post = pd.DataFrame([[username, f"{text} {selected_emotion}", emotion]], columns=['username', 'text', 'emotion'])
     posts_df = pd.concat([posts_df, new_post], ignore_index=True)
     posts_df.to_csv(POST_FILE, index=False)
 
+def delete_post(post_index):
+    posts_df = load_post()
+    posts_df = posts_df.drop(index=post_index)
+    posts_df.to_csv(POST_FILE, index=False)
 
 def show_registration_page():
     st.title("Registration")
@@ -50,6 +57,7 @@ def show_login_page():
         if login_user(username, password):
             st.session_state['logged_in'] = True
             st.session_state['username'] = username
+            st.session_state['is_admin'] = (username == "admin")
             st.experimental_rerun()
         else:
             st.error("Invalid username or password!")
@@ -60,10 +68,12 @@ def show_main_page():
     st.write(f"Logged as: {st.session_state['username']}")
 
     text_input = st.text_area("Enter text:")
+    selected_emotions = st.selectbox("Select emoji: ", list(emotions.values()))
+
     if st.button("Analyze and Post"):
         if text_input:
             emotion, probabilities = predict_emotions(text_input)
-            save_post(st.session_state['username'], text_input, emotion)
+            save_post(st.session_state['username'], text_input, emotion, selected_emotions)
             st.write(f"The most likely emotion: {emotion}")
             st.write(f"Confidence percentage: {probabilities:2f}%")
         else:
@@ -77,6 +87,14 @@ def show_main_page():
     posts_df = load_post()
     for index, row in posts_df.iterrows():
         st.write(f"**{row['username']}**: {row['text']} - _{row['emotion']}_")
+
+        st.session_state[f"Delete post {index}"] = False
+
+        if st.session_state.get('is_admin', False):
+            if st.button(f"Delete post {index}"):
+                delete_post(index)
+                st.success("Post has been deleted!")
+                st.experimental_rerun()
 
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
