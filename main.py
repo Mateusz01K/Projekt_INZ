@@ -97,6 +97,16 @@ def show_main_page():
                 st.experimental_rerun()
 
 if 'logged_in' not in st.session_state:
+    login_or_register = st.sidebar.selectbox("Login/Registration", ("Sign in", "Registration"))
+    if login_or_register == "Sign in":
+        show_login_page()
+    else:
+        show_registration_page()
+
+    st.write('### All posts')
+    posts_df = load_post()
+    for index, row in posts_df.iterrows():
+        st.write(f"**{row['username']}**: {row['text']} - _{row['emotion']}_")
     st.session_state['logged_in'] = False
 
 if st.session_state['logged_in']:
@@ -107,3 +117,7 @@ else:
         show_login_page()
     else:
         show_registration_page()
+    st.write('### All posts')
+    posts_df = load_post()
+    for index, row in posts_df.iterrows():
+        st.write(f"**{row['username']}**: {row['text']} - _{row['emotion']}_")
