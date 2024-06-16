@@ -27,9 +27,9 @@ def load_post():
     else:
         return pd.DataFrame(columns=['username', 'text', 'emotion'])
 
-def save_post(username, text, emotion, selected_emotion):
+def save_post(username, text, emotion):
     posts_df = load_post()
-    new_post = pd.DataFrame([[username, f"{text} {selected_emotion}", emotion]], columns=['username', 'text', 'emotion'])
+    new_post = pd.DataFrame([[username, f"{text}", emotion]], columns=['username', 'text', 'emotion'])
     posts_df = pd.concat([posts_df, new_post], ignore_index=True)
     posts_df.to_csv(POST_FILE, index=False)
 
@@ -68,12 +68,11 @@ def show_main_page():
     st.write(f"Logged as: {st.session_state['username']}")
 
     text_input = st.text_area("Enter text:")
-    selected_emotions = st.selectbox("Select emoji: ", list(emotions.values()))
 
     if st.button("Analyze and Post"):
         if text_input:
             emotion, probabilities = predict_emotions(text_input)
-            save_post(st.session_state['username'], text_input, emotion, selected_emotions)
+            save_post(st.session_state['username'], text_input, emotion)
             st.write(f"The most likely emotion: {emotion}")
             st.write(f"Confidence percentage: {probabilities:2f}%")
         else:
@@ -96,17 +95,13 @@ def show_main_page():
                 st.success("Post has been deleted!")
                 st.experimental_rerun()
 
-if 'logged_in' not in st.session_state:
-    login_or_register = st.sidebar.selectbox("Login/Registration", ("Sign in", "Registration"))
-    if login_or_register == "Sign in":
-        show_login_page()
-    else:
-        show_registration_page()
-
+def show_posts():
     st.write('### All posts')
     posts_df = load_post()
     for index, row in posts_df.iterrows():
         st.write(f"**{row['username']}**: {row['text']} - _{row['emotion']}_")
+
+if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 
 if st.session_state['logged_in']:
@@ -117,7 +112,4 @@ else:
         show_login_page()
     else:
         show_registration_page()
-    st.write('### All posts')
-    posts_df = load_post()
-    for index, row in posts_df.iterrows():
-        st.write(f"**{row['username']}**: {row['text']} - _{row['emotion']}_")
+    show_posts()
