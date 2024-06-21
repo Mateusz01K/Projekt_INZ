@@ -44,7 +44,9 @@ def delete_post(post_index):
 def edit_post(post_index, new_text):
     posts_df = load_post()
     if posts_df.at[post_index, 'author'] == st.session_state['username']:
+        new_emotion, _ = predict_emotions(new_text)
         posts_df.at[post_index, 'text'] = new_text
+        posts_df.at[post_index, 'emotion'] = new_emotion
         posts_df.to_csv(POST_FILE, index=False)
         return True
     return False
@@ -111,11 +113,16 @@ def show_main_page():
                 st.success("Post has been deleted!")
                 st.experimental_rerun()
 
-            if st.button(f"Edit post {index}_{row['username']}"):
+            with st.form(key=f"Edit post {index}"):
                 new_text = st.text_area(f"Edit post {index}", value=row['text'])
-                if st.button(f"Save post {index}", key=f"save_{index}"):
-                    edit_post(index, new_text)
-                    st.success("Success!")
+                if st.form_submit_button(label=f"Save post {index}"):
+                    if new_text.strip():
+                        if edit_post(index, new_text):
+                            st.success("Success!")
+                        else:
+                            st.write("Error!")
+                    else:
+                        st.error("Enter text before save!")
                     st.experimental_rerun()
 def show_posts():
     st.write('### All posts')
