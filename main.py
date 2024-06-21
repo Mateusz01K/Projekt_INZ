@@ -25,18 +25,29 @@ def load_post():
     if os.path.exists(POST_FILE):
         return pd.read_csv(POST_FILE)
     else:
-        return pd.DataFrame(columns=['username', 'text', 'emotion'])
+        return pd.DataFrame(columns=['username', 'text', 'emotion', 'author'])
 
 def save_post(username, text, emotion):
     posts_df = load_post()
-    new_post = pd.DataFrame([[username, f"{text}", emotion]], columns=['username', 'text', 'emotion'])
+    new_post = pd.DataFrame([[username, f"{text}", emotion, username]], columns=['username', 'text', 'emotion', 'author'])
     posts_df = pd.concat([posts_df, new_post], ignore_index=True)
     posts_df.to_csv(POST_FILE, index=False)
 
 def delete_post(post_index):
     posts_df = load_post()
-    posts_df = posts_df.drop(index=post_index)
-    posts_df.to_csv(POST_FILE, index=False)
+    if posts_df.at[post_index, 'author'] == st.session_state['username'] or st.session_state.get('is_admin', False):
+        posts_df = posts_df.drop(index=post_index)
+        posts_df.to_csv(POST_FILE, index=False)
+        return True
+    return False
+
+def edit_post(post_index, new_text):
+    posts_df = load_post()
+    if posts_df.at[post_index, 'author'] == st.session_state['username']:
+        posts_df.at[post_index, 'text'] = new_text
+        posts_df.to_csv(POST_FILE, index=False)
+        return True
+    return False
 
 def show_registration_page():
     st.title("Registration")
@@ -87,14 +98,25 @@ def show_main_page():
     for index, row in posts_df.iterrows():
         st.write(f"**{row['username']}**: {row['text']} - _{row['emotion']}_")
 
-        st.session_state[f"Delete post {index}"] = False
 
-        if st.session_state.get('is_admin', False):
-            if st.button(f"Delete post {index}"):
+        if st.session_state.get('is_admin', False) and row['author'] != st.session_state['username']:
+            if st.button(f"Delete post {index}_{row['username']}"):
                 delete_post(index)
                 st.success("Post has been deleted!")
                 st.experimental_rerun()
 
+        if row['author'] == st.session_state['username']:
+            if st.button(f"Delete post {index}", key=f"delete_{index}"):
+                delete_post(index)
+                st.success("Post has been deleted!")
+                st.experimental_rerun()
+
+            if st.button(f"Edit post {index}_{row['username']}"):
+                new_text = st.text_area(f"Edit post {index}", value=row['text'])
+                if st.button(f"Save post {index}", key=f"save_{index}"):
+                    edit_post(index, new_text)
+                    st.success("Success!")
+                    st.experimental_rerun()
 def show_posts():
     st.write('### All posts')
     posts_df = load_post()
