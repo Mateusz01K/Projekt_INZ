@@ -5,7 +5,7 @@ import streamlit as st
 import joblib
 from auth import register_user, login_user
 
-model = joblib.load(r"emotion_detection_model.pkl")
+model = joblib.load("emotion_detection_model.pkl")
 
 emotions_index = {0: "anger", 2: "happy", 4: "neutral", 3: "joy", 6: "sadness", 1: "fear", 5: "sad", 7: "shame"}
 
